@@ -1,0 +1,25 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: nginx-deployment
+  name: nginx-deployment
+  namespace: giropops
+spec:
+  replicas: 10
+  revisionHistoryLimit: 20
+  selector:
+    matchLabels:
+      app: nginx-deployment
+  strategy: 
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: nginx-deployment
+    spec:
+      containers:
+      - image: nginx:1.10
+        name: nginx
+        resources: {}
+status: {}

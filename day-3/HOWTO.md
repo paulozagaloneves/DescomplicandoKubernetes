@@ -205,7 +205,8 @@ $ kubectl rollout restart deployment -n giropops nginx-deployment
 deployment.apps/nginx-deployment restarted
 ```
 
-**Usando scale**
+> [!TIP]
+> Usando scale
 
 ```bash
 $ kubectl scale deployment -n giropops --replicas 0 nginx-deployment

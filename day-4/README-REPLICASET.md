@@ -1,4 +1,4 @@
-# Aula 4
+# Aula 4 - Replicasets
 
 ## Criar um deployment da aplicação nginx
 
@@ -81,8 +81,7 @@ nginx-tpc-deployment-5865b9fc78   3         3         3       7d15h
 ```
 
 > [!NOTE]
-> Manteve o mesmo replicaset
-
+>
 
 **Usando yaml manifest**
 
@@ -128,8 +127,7 @@ deployment.apps/nginx-deployment configured
 ```
 
 > [!NOTE]
-> Manteve o mesmo replicaset porque apenas mudaram o número de réplicas
-
+>
 
 **Arquivo:** `k8s-nginx-deployment-3replicas-novaversao.yaml`
 
@@ -183,7 +181,7 @@ nginx-tpc-deployment-5865b9fc78   3         3         3       7d15h
 ```
 
 > [!NOTE]
-> Antigo replicaset nginx-deployment-584b7b986 ficou com 0 pods
+>
 > Criado novo replicaset nginx-deployment-5b8d6f9568 com 3 pods
 
 ## Observando detalhes do deployment
@@ -240,21 +238,6 @@ Events:
 ```
 
 > [!NOTE]
-> Conditions:
-> 
-> Type           Status  Reason
-> 
->  ----           ------  ------
-> 
->  Available      True    MinimumReplicasAvailable
-> 
->  Progressing    True    NewReplicaSetAvailable
-> 
-> OldReplicaSets:  nginx-deployment-584b7b986 (0/0 replicas created)
-> 
-> NewReplicaSet:   nginx-deployment-5b8d6f9568 (3/3 replicas created)
-> 
-
 
 ## Rollback com rollout
 
@@ -270,5 +253,5 @@ nginx-tpc-deployment-5865b9fc78   3         3         3       7d15h
 ```
 
 > [!NOTE]
-> O replicatset "novo" nginx-deployment-5b8d6f9568 ficou esvaziado.
+>
 > O replicatset "anterior" nginx-deployment-5b8d6f9568 ficou com 3 pods.

@@ -50,7 +50,6 @@ deployment.apps/nginx-deployment configured
 $ kubectl get deployments.apps nginx-deployment -o yaml
 ```
 
-
 *Obter lista de pods com label app=nginx*
 
 ```bash
@@ -60,7 +59,6 @@ nginx-deployment-5995856f4f-2whwk   1/1     Running   0          4m29s
 nginx-deployment-5995856f4f-tsmsm   1/1     Running   0          4m29s
 nginx-deployment-5995856f4f-w8tzb   1/1     Running   0          4m29s
 ```
-
 
 # Criar 'template' de manifesto
 
@@ -156,14 +154,12 @@ Waiting for deployment "nginx-deployment" rollout to finish: 9 of 10 updated rep
 deployment "nginx-deployment" successfully rolled out
 ```
 
-
 ## Rollback
 
 ```bash
 $ kubectl rollout undo -n giropops deployment nginx-deployment
 deployment.apps/nginx-deployment rolled back
 ```
-
 
 ## Rollback History
 
@@ -196,7 +192,6 @@ Pod Template:
   Node-Selectors:       <none>
   Tolerations:  <none>
 ```
-
 
 ## Rollout Restart Pods
 

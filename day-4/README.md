@@ -80,7 +80,7 @@ nginx-deployment-584b7b986        3         3         3       3m22s
 nginx-tpc-deployment-5865b9fc78   3         3         3       7d15h
 ```
 
-> [!TIP]
+> [!NOTE]
 > Manteve o mesmo replicaset
 
 
@@ -127,7 +127,7 @@ $ kubectl apply -f k8s-nginx-deployment-3replicas.yaml
 deployment.apps/nginx-deployment configured
 ```
 
-> [!TIP]
+> [!NOTE]
 > Manteve o mesmo replicaset porque apenas mudaram o número de réplicas
 
 
@@ -182,7 +182,7 @@ nginx-deployment-5b8d6f9568       3         3         3       2m34s
 nginx-tpc-deployment-5865b9fc78   3         3         3       7d15h
 ```
 
-> [!TIP]
+> [!NOTE]
 > Antigo replicaset nginx-deployment-584b7b986 ficou com 0 pods
 > Criado novo replicaset nginx-deployment-5b8d6f9568 com 3 pods
 
@@ -239,7 +239,7 @@ Events:
   Normal  ScalingReplicaSet  6m21s              deployment-controller  Scaled down replica set nginx-deployment-584b7b986 from 1 to 0
 ```
 
-> [!TIP]
+> [!NOTE]
 > Conditions:
 > 
 > Type           Status  Reason
@@ -254,3 +254,21 @@ Events:
 > 
 > NewReplicaSet:   nginx-deployment-5b8d6f9568 (3/3 replicas created)
 > 
+
+
+## Rollback com rollout
+
+```bash
+$ kubectl rollout undo deployment nginx-deployment
+deployment.apps/nginx-deployment rolled back
+
+$ kubectl get replicasets.apps                    
+NAME                              DESIRED   CURRENT   READY   AGE
+nginx-deployment-584b7b986        3         3         3       25m
+nginx-deployment-5b8d6f9568       0         0         0       12m
+nginx-tpc-deployment-5865b9fc78   3         3         3       7d15h
+```
+
+> [!NOTE]
+> O replicatset "novo" nginx-deployment-5b8d6f9568 ficou esvaziado.
+> O replicatset "anterior" nginx-deployment-5b8d6f9568 ficou com 3 pods.

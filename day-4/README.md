@@ -241,9 +241,16 @@ Events:
 
 > [!TIP]
 > Conditions:
+> 
 > Type           Status  Reason
+> 
 >  ----           ------  ------
+> 
 >  Available      True    MinimumReplicasAvailable
+> 
 >  Progressing    True    NewReplicaSetAvailable
+> 
 > OldReplicaSets:  nginx-deployment-584b7b986 (0/0 replicas created)
+> 
 > NewReplicaSet:   nginx-deployment-5b8d6f9568 (3/3 replicas created)
+> 

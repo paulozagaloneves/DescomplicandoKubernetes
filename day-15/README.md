@@ -312,6 +312,7 @@ require-cpu-memory-limits:
 
 
 
+
 **File:** mutate-policy-add-label-namespace.yaml
 
 ```yaml
@@ -363,4 +364,239 @@ Status:       Active
 No resource quota.
 
 No LimitRange resource.
+```
+
+
+### Policy Generate
+
+**Generating Policies** no Kyverno são rules que **criam automaticamente novos recursos** quando um recurso base é criado, sem necessidade de intervenção manual.
+
+**Como funcionam:**
+
+Quando um recurso (ex: Namespace) é criado, a policy gera automaticamente outro recurso (ex: ConfigMap, NetworkPolicy, RBAC) no mesmo cluster.
+
+**Quando usar:**
+
+1. Padrões organizacionais automáticos
+
+- Criar ConfigMap padrão em cada namespace novo
+- Gerar NetworkPolicies default para isolamento
+- Provisionar RBACs básicos automaticamente
+
+2. Conformidade e governança
+
+- Criar ResourceQuota em cada namespace
+- Gerar PodSecurityPolicy automaticamente
+- Provisionar monitoring/logging sidecars
+
+3. Infraestrutura como código
+
+- Gerar Ingress automático baseado em label
+- Criar secrets padrão em namespaces
+- Provisionar storage volumes automaticamente
+
+**Vantagens:**
+
+- ✅ Elimina configuração manual repetitiva
+- ✅ Garante padrões em toda a organização
+- ✅ Reduz erros humanos
+- ✅ Otimiza onboarding de novos namespaces
+
+**Diferença vs Mutate:**
+
+- **Mutate**: modifica o recurso que está sendo criado (ex: adiciona label ao Pod)
+- **Generate**: cria um recurso totalmente novo no cluster (ex: cria ConfigMap quando Namespace nasce)
+
+#### Nossa policy
+
+**File:** generate-cm-adding-ns.yaml
+
+```yaml
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: generate-configmap-for-namespace
+spec:
+  rules:
+    - name: generate-namespace-configmap
+      match:
+        resources:
+          kinds:
+            - Namespace
+      generate:
+        apiVersion: v1
+        kind: ConfigMap
+        name: ns-default-configmap
+        namespace: "{{request.object.metadata.name}}"
+        data:
+          data:
+            LOG_LEVEL: "info"
+            LOG_FORMAT: "json"
+            TZ: "UTC"
+            APP_PORT: "8080"
+            REQUEST_TIMEOUT: "5s"
+            RETRY_MAX: "3"
+            FEATURE_FLAGS: "billing=false,search=true"
+            OTEL_EXPORTER_OTLP_ENDPOINT: "http://otel-collector.observability:4317"
+            OTEL_SERVICE_NAME: "default-app"
+```
+
+```bash
+$ kubectl apply -f ./generate-cm-adding-ns.yaml
+clusterpolicy.kyverno.io/generate-configmap-for-namespace created
+$
+$
+$ kubectl get clusterpolicies.kyverno.io -o wide
+NAME                               ADMISSION   BACKGROUND   READY   AGE   FAILURE POLICY   VALIDATE   MUTATE   GENERATE   VERIFY IMAGES   MESSAGE
+add-label-namespace                true        true         True    16m                    0          1        0          0               Ready
+generate-configmap-for-namespace   true        true         True    7s                     0          0        1          0               Ready
+require-cpu-memory-limits          true        true         True    48m                    1          0        0          0               Ready
+```
+
+
+**Criando o nosso namespace e validando se configmap foi criado**
+
+```bash
+$ kubectl create namespace giropops             
+namespace/giropops created
+$
+$ kubectl get configmaps -n giropops  
+NAME                   DATA   AGE
+kube-root-ca.crt       1      20s
+ns-default-configmap   9      20s
+```
+
+```bash
+$ kubectl describe configmaps -n giropops ns-default-configmap
+Name:         ns-default-configmap
+Namespace:    giropops
+Labels:       app.kubernetes.io/managed-by=kyverno
+              generate.kyverno.io/policy-name=generate-configmap-for-namespace
+              generate.kyverno.io/policy-namespace=
+              generate.kyverno.io/rule-name=generate-namespace-configmap
+              generate.kyverno.io/trigger-group=
+              generate.kyverno.io/trigger-kind=Namespace
+              generate.kyverno.io/trigger-namespace=
+              generate.kyverno.io/trigger-uid=75e1fe1e-bd83-44cf-b378-ab7aadbca111
+              generate.kyverno.io/trigger-version=v1
+Annotations:  <none>
+
+Data
+====
+APP_PORT:
+----
+8080
+
+FEATURE_FLAGS:
+----
+billing=false,search=true
+
+LOG_FORMAT:
+----
+json
+
+LOG_LEVEL:
+----
+info
+
+OTEL_EXPORTER_OTLP_ENDPOINT:
+----
+http://otel-collector.observability:4317
+
+OTEL_SERVICE_NAME:
+----
+default-app
+
+REQUEST_TIMEOUT:
+----
+5s
+
+RETRY_MAX:
+----
+3
+
+TZ:
+----
+UTC
+
+
+BinaryData
+====
+
+Events:  <none>
+```
+
+
+### Policy que proibe containers runAsRoot
+
+
+**File:** disallow-root-user.yaml
+
+
+```yaml
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: disallow-root-user
+  annotations:
+    policies.kyverno.io/description: "Disallow containers from running as root user"
+spec:
+  validationFailureAction: Enforce
+#  background: true
+  rules:
+  - name: check-runAsNonRoot
+    match:
+      resources:
+        kinds:
+        - Pod
+    validate:
+      message: "Running as root user is not allowed"
+      pattern:
+        spec:
+          containers:
+          - securityContext:
+              runAsNonRoot: true
+```
+
+```bash
+$ kubectl apply -f ./disallow-root-user.yaml           
+clusterpolicy.kyverno.io/disallow-root-user created
+
+$ kubectl get clusterpolicies.kyverno.io -o wide         
+NAME                               ADMISSION   BACKGROUND   READY   AGE   FAILURE POLICY   VALIDATE   MUTATE   GENERATE   VERIFY IMAGES   MESSAGE
+add-label-namespace                true        true         True    43m                    0          1        0          0               Ready
+disallow-root-user                 true        true         True    51s                    1          0        0          0               Ready
+generate-configmap-for-namespace   true        true         True    27m                    0          0        1          0               Ready
+require-cpu-memory-limits          true        true         True    75m                    1          0        0          0               Ready
+```
+
+
+**Testando a policy**
+
+```bash
+$ kubectl apply -f ./pod.yaml 
+Error from server: error when creating "./pod.yaml": admission webhook "validate.kyverno.svc-fail" denied the request: 
+
+resource Pod/default/nginx-kyverno-validation was blocked due to the following policies 
+
+disallow-root-user:
+  check-runAsNonRoot: 'validation error: Running as root user is not allowed. rule
+    check-runAsNonRoot failed at path /spec/containers/0/securityContext/'
+```
+
+
+**Após também remover os recursos do pod**
+
+```bash
+$ kubectl apply -f ./pod.yaml                                                                                                                                                           1 ↵
+Error from server: error when creating "./pod.yaml": admission webhook "validate.kyverno.svc-fail" denied the request: 
+
+resource Pod/default/nginx-kyverno-validation was blocked due to the following policies 
+
+disallow-root-user:
+  check-runAsNonRoot: 'validation error: Running as root user is not allowed. rule
+    check-runAsNonRoot failed at path /spec/containers/0/securityContext/'
+require-cpu-memory-limits:
+  validate-limits: 'validation error: CPU and memory limits are required. rule validate-limits
+    failed at path /spec/containers/0/resources/limits/'
 ```

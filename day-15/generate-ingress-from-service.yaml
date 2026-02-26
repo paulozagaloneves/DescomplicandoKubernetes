@@ -1,0 +1,33 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: generate-ingress-for-exposed-services
+spec:
+  rules:
+    - name: generate-ingress-from-service
+      match:
+        resources:
+          kinds:
+            - Service
+          selector:
+            matchLabels:
+              expose: "true"
+      generate:
+        apiVersion: networking.k8s.io/v1
+        kind: Ingress
+        name: "{{request.object.metadata.name}}-ingress"
+        namespace: "{{request.object.metadata.namespace}}"
+        data:
+          spec:
+            ingressClassName: nginx
+            rules:
+              - host: "{{request.object.metadata.name}}.kode.expert"
+                http:
+                  paths:
+                    - path: /
+                      pathType: Prefix
+                      backend:
+                        service:
+                          name: "{{request.object.metadata.name}}"
+                          port:
+                            number: 80

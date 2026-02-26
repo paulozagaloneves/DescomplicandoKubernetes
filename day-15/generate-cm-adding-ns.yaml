@@ -1,0 +1,27 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: generate-configmap-for-namespace
+spec:
+  rules:
+    - name: generate-namespace-configmap
+      match:
+        resources:
+          kinds:
+            - Namespace
+      generate:
+        apiVersion: v1
+        kind: ConfigMap
+        name: ns-default-configmap
+        namespace: "{{request.object.metadata.name}}"
+        data:
+          data:
+            LOG_LEVEL: "info"
+            LOG_FORMAT: "json"
+            TZ: "UTC"
+            APP_PORT: "8080"
+            REQUEST_TIMEOUT: "5s"
+            RETRY_MAX: "3"
+            FEATURE_FLAGS: "billing=false,search=true"
+            OTEL_EXPORTER_OTLP_ENDPOINT: "http://otel-collector.observability:4317"
+            OTEL_SERVICE_NAME: "default-app"

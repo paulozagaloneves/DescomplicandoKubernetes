@@ -1,0 +1,33 @@
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: nginx-giropops
+  labels:
+    app: nginx-giropops
+spec:
+  containers:
+  - name: nginx-giropops
+    image: nginx:latest
+    ports:
+    - containerPort: 80
+    resources:
+      limits:
+        memory: "128Mi"
+        cpu: "500m"
+      requests:
+        memory: "64Mi"
+        cpu: "250m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: giropops-nginx-service
+  labels:
+    expose: "true"
+spec:
+  selector:
+    app: nginx-giropops
+  ports:
+    - port: 80
+      targetPort: 80

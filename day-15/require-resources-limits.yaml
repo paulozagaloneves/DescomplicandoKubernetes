@@ -10,6 +10,10 @@ spec:
       resources:
         kinds:
         - Pod
+    exclude:
+      resources:
+        namespaces:
+        - giropops
     validate:
       message: "CPU and memory limits are required"
       pattern:

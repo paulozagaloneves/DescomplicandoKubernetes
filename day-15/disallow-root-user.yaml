@@ -13,6 +13,10 @@ spec:
       resources:
         kinds:
         - Pod
+    exclude:
+      resources:
+        namespaces:
+        - giropops
     validate:
       message: "Running as root user is not allowed"
       pattern:

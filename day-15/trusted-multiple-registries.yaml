@@ -1,0 +1,24 @@
+apiVersion: kyverno.io/v1
+kind: Policy
+metadata:
+  name: images-from-trusted-registry
+  namespace: giropops
+spec:
+  validationFailureAction: Enforce
+  rules:
+  - name: check-registry
+    match:
+      resources:
+        kinds:
+        - Pod
+    validate:
+      message: "Images must come from Chainguard registry (cgr.dev) or Paulo Neves registry (docker.io/pauloneves)"
+      anyPattern:
+        - spec:
+            containers:
+            - name: "*"
+              image: "cgr.dev/chainguard/*"
+        - spec:
+            containers:
+            - name: "*"
+              image: "docker.io/pauloneves/*"

@@ -9,11 +9,13 @@ Principais características:
 
 - Bloqueia ou aprova requisições que não atendem aos critérios da política
 - Exemplos: bloquear pods sem resource limits, exigir labels específicos, validar assinaturas de imagens
+
   
 2. Mutação (Mutating Policies)
 
 - Modifica automaticamente recursos antes deles serem criados
 - Exemplos: adicionar automaticamente labels, injetar sidecars, configurar pull policy em imagens
+
   
 3. Geração (Generating Policies)
 
@@ -41,7 +43,6 @@ Casos de uso comuns:
 - Aplicar padrões organizacionais (ex: exigir labels de custo, owner)
 - Prevenir misconfigurations (ex: exigir resource limits e health probes)
 
-
 ### Instalação
 
 **Adicionar repositorio no helm**
@@ -59,7 +60,6 @@ Hang tight while we grab the latest from your chart repositories...
 ...Successfully got an update from the "traefik" chart repository
 Update Complete. ⎈Happy Helming!⎈
 ```
-
 
 **Instalar kyverno**
 
@@ -155,7 +155,6 @@ spec:
                 cpu: "?*"
 ```
 
-
 **Obter policy criada**
 
 ```bash
@@ -163,7 +162,6 @@ $ kubectl get clusterpolicies.kyverno.io
 NAME                        ADMISSION   BACKGROUND   READY   AGE   MESSAGE
 require-cpu-memory-limits   true        true         True    14m   Ready
 ```
-
 
 **Describe**
 
@@ -280,9 +278,6 @@ Events:
   Warning  PolicyViolation  11m   kyverno-admission  Pod default/nginx-kyverno-validation: [validate-limits] fail (blocked); validation error: CPU and memory limits are required. rule validate-limits failed at path /spec/containers/0/resources/limits/
 ```
 
-
-
-
 #### Testar a regra
 
 ```yaml
@@ -307,11 +302,7 @@ require-cpu-memory-limits:
     failed at path /spec/containers/0/resources/limits/'
 ```
 
-
 ### Policy tipo Mutate
-
-
-
 
 **File:** mutate-policy-add-label-namespace.yaml
 
@@ -347,7 +338,6 @@ add-label-namespace         true        true         True    44s                
 require-cpu-memory-limits   true        true         True    32m                    1          0        0          0               Ready
 ```
 
-
 #### criar namespace
 
 ```bash
@@ -365,7 +355,6 @@ No resource quota.
 
 No LimitRange resource.
 ```
-
 
 ### Policy Generate
 
@@ -453,7 +442,6 @@ generate-configmap-for-namespace   true        true         True    7s          
 require-cpu-memory-limits          true        true         True    48m                    1          0        0          0               Ready
 ```
 
-
 **Criando o nosso namespace e validando se configmap foi criado**
 
 ```bash
@@ -526,12 +514,9 @@ BinaryData
 Events:  <none>
 ```
 
-
 ### Policy que proibe containers runAsRoot
 
-
 **File:** disallow-root-user.yaml
-
 
 ```yaml
 apiVersion: kyverno.io/v1
@@ -570,7 +555,6 @@ generate-configmap-for-namespace   true        true         True    27m         
 require-cpu-memory-limits          true        true         True    75m                    1          0        0          0               Ready
 ```
 
-
 **Testando a policy**
 
 ```bash
@@ -583,7 +567,6 @@ disallow-root-user:
   check-runAsNonRoot: 'validation error: Running as root user is not allowed. rule
     check-runAsNonRoot failed at path /spec/containers/0/securityContext/'
 ```
-
 
 **Após também remover os recursos do pod**
 
@@ -600,3 +583,193 @@ require-cpu-memory-limits:
   validate-limits: 'validation error: CPU and memory limits are required. rule validate-limits
     failed at path /spec/containers/0/resources/limits/'
 ```
+
+
+### Policy para limitar pull de registry confiável
+
+
+Vamos criar uma policy no namespace giropops que limite o uso de imagens apenas da chainguard
+
+```yaml
+apiVersion: kyverno.io/v1
+kind: Policy
+metadata:
+  name: images-from-trusted-registry
+  namespace: giropops
+spec:
+  validationFailureAction: Enforce
+  rules:
+  - name: check-registry
+    match:
+      resources:
+        kinds:
+        - Pod
+    validate:
+      message: "Images must come from Chainguard registry (cgr.dev)"
+      pattern:
+        spec:
+          containers:
+          - name: "*"
+            image: "cgr.dev/chainguard/*"
+```            
+
+
+**Validando**
+
+```bash
+$ kubectl apply -f trusted-registry.yaml     
+policy.kyverno.io/images-from-trusted-registry created
+
+
+╭─paulo@discovery ~/workspace/linuxtips/DescomplicandoKubernetes/day-15 ‹main●› (⎈|k8s_40:N/A)
+╰─$ kubectl get policies.kyverno.io -n giropops
+NAME                           ADMISSION   BACKGROUND   READY   AGE   MESSAGE
+images-from-trusted-registry   true        true         True    3s    Ready
+
+
+╭─paulo@discovery ~/workspace/linuxtips/DescomplicandoKubernetes/day-15 ‹main●› (⎈|k8s_40:N/A)
+╰─$ kubectl run nginx-giropops --image nginx --namespace giropops          
+Error from server: admission webhook "validate.kyverno.svc-fail" denied the request: 
+
+resource Pod/giropops/nginx-giropops was blocked due to the following policies 
+
+disallow-root-user:
+  check-runAsNonRoot: 'validation error: Running as root user is not allowed. rule
+    check-runAsNonRoot failed at path /spec/containers/0/securityContext/'
+images-from-trusted-registry:
+  check-registry: 'validation error: Images must come from Chainguard registry (cgr.dev).
+    rule check-registry failed at path /spec/containers/0/image/'
+require-cpu-memory-limits:
+  validate-limits: 'validation error: CPU and memory limits are required. rule validate-limits
+    failed at path /spec/containers/0/resources/limits/'
+
+
+╭─paulo@discovery ~/workspace/linuxtips/DescomplicandoKubernetes/day-15 ‹main●› (⎈|k8s_40:N/A)
+╰─$ kubectl run nginx-giropops --image cgr.dev/chainguard/nginx --namespace giropops                                                                                                      1 ↵
+Error from server: admission webhook "validate.kyverno.svc-fail" denied the request: 
+
+resource Pod/giropops/nginx-giropops was blocked due to the following policies 
+
+disallow-root-user:
+  check-runAsNonRoot: 'validation error: Running as root user is not allowed. rule
+    check-runAsNonRoot failed at path /spec/containers/0/securityContext/'
+require-cpu-memory-limits:
+  validate-limits: 'validation error: CPU and memory limits are required. rule validate-limits
+    failed at path /spec/containers/0/resources/limits/'
+```
+
+
+
+Esta Kyverno Policy chamada images-from-trusted-registry, aplicada no namespace giropops, tem como objetivo garantir que todos os Pods criados utilizem apenas imagens provenientes do repositório Chainguard (cgr.dev/chainguard).
+
+Análise dos principais pontos:
+
+- **apiVersion**: kyverno.io/v1 e kind: Policy — Define que é uma policy Kyverno.
+- **metadata**: name e namespace — Nomeia a policy e restringe sua aplicação ao namespace giropops.
+- **validationFailureAction**: Enforce — A policy será aplicada de forma obrigatória (bloqueia recursos que não estejam em conformidade).
+- **rules**: check-registry — Regra que será aplicada a todos os recursos do tipo Pod.
+- **validate**: pattern — Exige que, para cada container do Pod, o campo image siga o padrão cgr.dev/chainguard/*.
+- Mensagem customizada — Caso a regra seja violada, retorna: "Images must come from Chainguard registry (cgr.dev)".
+
+**Resumo**: Esta policy impede a criação de Pods no namespace giropops que utilizem imagens de outros registries que não sejam o Chainguard, reforçando a segurança e o controle de origem das imagens.
+
+
+Os valores possíveis para o campo validationFailureAction em uma policy do Kyverno são:
+
+- **Enforce**: A policy é obrigatória. Recursos que não estiverem em conformidade serão bloqueados (criação/atualização negada).
+- **Audit**: A policy apenas audita. Recursos fora do padrão são permitidos, mas um evento de violação é registrado (não bloqueia a operação).
+
+### Policy para limitar multiplos registries confiáveis
+
+É possivel permitir múltiplos registries válidos em uma policy Kyverno. Para isso, você pode usar a chave anyPattern em vez de pattern dentro da regra validate. O anyPattern aceita uma lista de padrões, e o recurso será aceito se corresponder a qualquer um deles.
+
+**Exemplo:**
+
+```bash
+validate:
+  message: "Images must come de registries confiáveis"
+  anyPattern:
+    - spec:
+        containers:
+        - name: "*"
+          image: "cgr.dev/chainguard/*"
+    - spec:
+        containers:
+        - name: "*"
+          image: "docker.io/meu-registry/*"
+```
+
+Assim, a policy aceitará imagens de ambos os registries especificados.
+
+
+**Exemplo Completo:**
+
+```bash
+apiVersion: kyverno.io/v1
+kind: Policy
+metadata:
+  name: images-from-trusted-registry
+  namespace: giropops
+spec:
+  validationFailureAction: Enforce
+  rules:
+  - name: check-registry
+    match:
+      resources:
+        kinds:
+        - Pod
+    validate:
+      message: "Images must come from Chainguard registry (cgr.dev) or Paulo Neves registry (docker.io/pauloneves)"
+      anyPattern:
+        - spec:
+            containers:
+            - name: "*"
+              image: "cgr.dev/chainguard/*"
+        - spec:
+            containers:
+            - name: "*"
+              image: "docker.io/pauloneves/*"
+```              
+
+### Adicionar excludes nas nossas Policies
+
+Para adicionar exclusões na nossa regra, deve adicionar o exclude resources.
+
+```yaml
+    exclude:
+      resources:
+        namespaces:
+        - giropops
+```
+
+
+```yaml
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: disallow-root-user
+  annotations:
+    policies.kyverno.io/description: "Disallow containers from running as root user"
+spec:
+  validationFailureAction: Enforce
+#  background: true
+  rules:
+  - name: check-runAsNonRoot
+    match:
+      resources:
+        kinds:
+        - Pod
+    exclude:
+      resources:
+        namespaces:
+        - giropops
+    validate:
+      message: "Running as root user is not allowed"
+      pattern:
+        spec:
+          containers:
+          - securityContext:
+              runAsNonRoot: true
+```              
+
+

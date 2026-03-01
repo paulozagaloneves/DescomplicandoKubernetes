@@ -1,0 +1,476 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: kyverno-lab
+  namespace: girus
+  labels:
+    app: girus-lab-template
+data:
+  lab.yaml: |
+    name: kyverno-lab
+    title: "Kyverno: Políticas e Automação no Kubernetes"
+    description: "Aprenda a utilizar o Kyverno para criar, validar, auditar, gerar e mutar recursos no Kubernetes, garantindo segurança, conformidade e automação no seu cluster."
+    duration: 60m
+    image: "linuxtips/girus-kind-single-node:0.1"
+    tasks:
+      - name: "Kyverno: Apresentação e instalação"
+        description: "Entenda o que é o Kyverno, seus principais usos e instale no cluster usando Helm."
+        steps:
+          - "Leia a documentação oficial: https://kyverno.io/docs/"
+          - "Kyverno é um motor de políticas para Kubernetes que permite criar, validar, auditar, gerar e mutar recursos de forma declarativa usando YAML."
+          - "Principais casos de uso: validação de recursos, geração automática de recursos, mutação de recursos, auditoria de eventos e conformidade de segurança."
+          - "O Kyverno é implementado como um controlador no cluster Kubernetes e pode ser instalado usando Helm ou kubectl."
+          - "Para instalar o Kyverno, primeiro precisamos do Helm. Execute o comando abaixo para instalar o Helm:"
+          - "`curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-4 | bash`"
+          - "Adicione o repositório Helm:"
+          - "`helm repo add kyverno https://kyverno.github.io/kyverno/`"
+          - "Atualize o cache do Helm:"
+          - "`helm repo update`"
+          - "Instale o Kyverno no namespace kyverno:"
+          - "`helm install kyverno kyverno/kyverno --namespace kyverno --create-namespace`"
+          - "Valide a instalação:"
+          - "`kubectl get pods -n kyverno`"
+        tips:
+          - type: "info"
+            title: "O que é o Helm?"
+            content: "O Helm é uma ferramenta de gerenciamento de pacotes para Kubernetes que facilita a instalação e atualização de aplicações no cluster."
+          - type: "info"
+            title: "Por que usar o Kyverno?"
+            content: "O Kyverno permite criar políticas de segurança, conformidade e automação de forma declarativa, facilitando a gestão do cluster Kubernetes."
+          - type: "warning"
+            title: "Atenção à versão do Helm"
+            content: "Certifique-se de usar a versão correta do Helm (v4) para evitar problemas de compatibilidade com o Kyverno."
+        validation:
+          - command: "kubectl get pods -n kyverno | grep kyverno-admission-controller >/dev/null 2>&1 && echo 'ok'"
+            expectedOutput: "ok"
+            errorMessage: "Kyverno não está instalado corretamente."
+
+      - name: "Primeira policy"
+        description: "Você é o SRE responsável pelo cluster da sua empresa e verifica que a sua equipe constantemente não define limites de CPU e memória em seus Pods. Esta prática está a criar problemas de desempenho e estabilidade no cluster. Crie uma policy simples para exigir a definição de limites de CPU e memória em todos os Pods no cluster."
+        steps:
+          - "Crie o arquivo **require-resources-limits.yaml** com o conteúdo abaixo."
+          - | 
+            ```
+            cat <<EOF > require-resources-limits.yaml
+            apiVersion: kyverno.io/v1
+            kind: ClusterPolicy                 # ClusterPolicy se aplica a todo o cluster                
+            metadata:
+              name: require-resources-limits
+            spec:
+              validationFailureAction: Enforce  # Enforce bloqueia a criação do recurso se a validação falhar
+              rules:
+                - name: check-resources-limits
+                  match:
+                    resources:
+                      kinds:
+                        - Pod                   # Aplica a regra apenas a recursos do tipo Pod
+                  validate:
+                    message: 'CPU and memory limits are required.'
+                    pattern:
+                      spec:
+                        containers:
+                        - name: '*'
+                          resources:
+                            limits:
+                              cpu: '?*'         # O '?*' é uma sintaxe de correspondência que exige que o campo exista e tenha algum valor, mas não especifica um valor exato
+                              memory: '?*'      # O '?*' é uma sintaxe de correspondência que exige que o campo exista e tenha algum valor, mas não especifica um valor exato
+            EOF
+            ```
+          - "Aplique a policy: "
+          - "`kubectl apply -f require-resources-limits.yaml`"
+          - "Verifique se a policy está ativa: "
+          - "`kubectl get clusterpolicies.kyverno.io`"
+        tips:
+          - type: "info"
+            title: "ClusterPolicy vs Policy"
+            content: "ClusterPolicy se aplica a todo o cluster, enquanto Policy se aplica a um namespace específico."
+          - type: "info"
+            title: "ValidationFailureAction: Enforce vs Audit"
+            content: "O campo validationFailureAction define o comportamento quando uma validação falha. 'Enforce' bloqueia a criação do recurso, enquanto 'Audit' apenas registra o evento sem bloquear."
+          - type: "info"
+            title: "Pattern de validação"
+            content: "O pattern de validação usa uma sintaxe de correspondência para definir as regras que os recursos devem seguir. No exemplo, estamos exigindo que todos os containers tenham limites de CPU e memória definidos."
+        validation:
+          - command: "kubectl get clusterpolicies.kyverno.io | grep require-resources-limits >/dev/null 2>&1 && echo 'ok'"
+            expectedOutput: "ok"
+            errorMessage: "Policy não criada corretamente."
+
+      - name: "Validation: Proibir Pods sem definição de recursos"
+        description: "Agora teste a policy criada no passo anterior, tentando criar um Pod sem limites de recursos. O Kyverno deve bloquear a criação."
+        steps:
+          - "Crie o arquivo **pod.yaml** sem definir limites de CPU/memória."
+          - | 
+            ```
+            cat <<EOF > pod.yaml
+            apiVersion: v1
+            kind: Pod
+            metadata:
+              name: test-policy-pod
+            spec:
+              containers:
+              - name: test-container
+                image: nginx
+            EOF
+            ```
+          - "Tente aplicar: "
+          - "`kubectl apply -f pod.yaml`"
+          - "Observe o erro de validação do Kyverno."
+          - "`kubectl apply -f pod.yaml 2>&1 | grep 'CPU and memory limits are required'`"
+        tips:
+          - type: "info"
+            title: "Por que definir limites de recursos?"
+            content: "Definir limites de CPU e memória é uma prática recomendada para evitar que um Pod consuma recursos excessivos e afete a estabilidade do cluster."
+          - type: "info"
+            title: "Mensagens de erro do Kyverno"
+            content: "Quando uma validação falha, o Kyverno retorna uma mensagem de erro personalizada definida no campo 'message' da policy, facilitando a identificação do problema."
+          - type: "warning"
+            title: "Teste de validação"
+            content: "Certifique-se de que o Pod criado para teste realmente não tenha limites definidos, caso contrário a validação não será acionada."
+        validation:
+          - command: "kubectl get clusterpolicies.kyverno.io | grep require-resources-limits >/dev/null 2>&1 && echo 'ok'"
+            expectedOutput: "ok"
+            errorMessage: "Pod sem limites não foi bloqueado."
+
+      - name: "Audit: Avisando o uso de root nos containers"
+        description: "Numa reunião com a equipe de segurança, você percebe que alguns containers estão rodando como root. O cluster já está em produção e não é possível bloquear imediatamente a criação desses Pods. Crie uma policy em modo Audit para avisar (mas não bloquear) quando containers rodarem como root."
+        steps:
+          - "Crie o arquivo **warning-root-user-audit.yaml**, usando validationFailureAction como Audit."
+          - | 
+            ```
+            cat <<EOF > warning-root-user-audit.yaml
+            apiVersion: kyverno.io/v1
+            kind: ClusterPolicy
+            metadata:
+              name: warning-root-user
+            spec:
+              validationFailureAction: Audit
+              rules:
+              - name: check-root-user
+                match:
+                  resources:
+                    kinds:
+                    - Pod
+                validate:
+                  message: 'Running as root user is not allowed.'
+                  pattern:
+                    spec:
+                      containers:
+                      - name: '*'
+                        securityContext:
+                          runAsNonRoot: true
+            EOF
+            ```
+          - "Aplique a policy: "
+          - "`kubectl apply -f warning-root-user-audit.yaml`"
+          - "Crie um Pod que rode como root."
+          - "`kubectl run test-root-pod --image=nginx --restart=Never`"
+          - "Verifique os eventos de audit: "
+          - "`kubectl get events -A | grep kyverno`"
+        tips:
+          - type: "info"
+            title: "Segurança de containers"
+            content: "Rodar containers como root é uma prática de segurança ruim, pois pode permitir que um invasor comprometa o host se conseguir escapar do container. O Kyverno pode ajudar a reforçar boas práticas de segurança no cluster."
+          - type: "warning"
+            title: "Teste de audit"
+            content: "Lembre-se de que, como a policy está em modo Audit, o Pod será criado mesmo que viole a política. Verifique os eventos para confirmar que a violação ocorreu."
+        validation:
+          - command: "kubectl get clusterpolicies.kyverno.io | grep  warning-root-user >/dev/null 2>&1 && echo 'ok'"
+            expectedOutput: "ok"
+            errorMessage: "Policy de audit não criada."
+
+      - name: "Generate: Automatizar a criação de um Ingress na criação do Service"
+        description: "O cluster da sua empresa tem configurado o Nginx como Ingress Controller. O ingress não possui regras complexas e pretende expor serviços automaticamente. Crie uma policy que cria automaticamente um Ingress quando um Service for criado e tiver a label **expose: 'true'**."
+        steps:
+          - "Crie o arquivo **generate-ingress-from-service.yaml** conforme exemplo."
+          - | 
+            ```
+            cat <<EOF > generate-ingress-from-service.yaml
+            apiVersion: kyverno.io/v1
+            kind: ClusterPolicy
+            metadata:
+              name: generate-ingress-for-exposed-services
+            spec:
+              rules:
+              - name: generate-ingress-from-service
+                match:
+                  resources:
+                    kinds:
+                      - Service
+                    selector:
+                      matchLabels:
+                        expose: 'true'
+                generate:
+                  apiVersion: networking.k8s.io/v1
+                  kind: Ingress
+                  name: '{{request.object.metadata.name}}-ingress'
+                  namespace: '{{request.object.metadata.namespace}}'
+                  data:
+                    spec:
+                      ingressClassName: nginx
+                      rules:
+                        - host: '{{request.object.metadata.name}}.kode.expert'
+                          http:
+                            paths:
+                              - path: /
+                                pathType: Prefix
+                                backend:
+                                  service:
+                                    name: '{{request.object.metadata.name}}'
+                                    port:
+                                      number: 80
+            EOF
+            ```
+          - "Aplique a policy: "
+          - "`kubectl apply -f generate-ingress-from-service.yaml`"
+          - "Crie um Service de teste."
+          - | 
+            ```
+            cat <<EOF > service.yaml
+            apiVersion: v1
+            kind: Service
+            metadata:
+              name: test-service
+              labels:
+                expose: 'true'
+            spec:
+              selector:
+                app: test
+              ports:
+              - protocol: TCP
+                port: 80
+                targetPort: 80
+            EOF
+            ```
+          - "Aplique o Service: "
+          - "`kubectl apply -f service.yaml`"
+          - "Verifique se o Ingress foi criado automaticamente."
+          - "`kubectl get ingress | grep test-service-ingress`"
+        tips:
+          - type: "info"
+            title: "Geração automática de recursos"
+            content: "A funcionalidade `generate` do Kyverno permite criar recursos automaticamente com base em eventos de criação ou modificação de outros recursos, facilitando a automação de tarefas comuns no Kubernetes."
+          - type: "warning"
+            title: "Configuração do Ingress"
+            content: "Certifique-se de que o cluster tenha um controlador de Ingress instalado e configurado corretamente para que o Ingress gerado funcione como esperado."
+          - type: "info"
+            title: "Personalização do Ingress"
+            content: "O exemplo de policy gera um Ingress com configurações básicas. Você pode personalizar o template de geração para incluir outras regras, TLS, ou configurações específicas do seu ambiente."
+        validation:
+          - command: "kubectl get clusterpolicies.kyverno.io | grep generate-ingress-for-exposed-services >/dev/null 2>&1 && echo 'ok'"
+            expectedOutput: "ok"
+            errorMessage: "Ingress não foi gerado automaticamente."
+
+      - name: "Mutate: Adicione detalhes no seu namespace"
+        description: "No cluster da sua empresa foram criados centenas de namespaces. Perdeu-se o controle sobre a organização dos namespaces pois não foram criados labels. Crie uma policy que adicione labels automaticamente ao criar um namespace."
+        steps:
+          - "Crie o arquivo **mutate-policy-add-label-namespace.yaml** conforme exemplo."
+          - | 
+            ```
+            cat <<EOF > mutate-policy-add-label-namespace.yaml
+            apiVersion: kyverno.io/v1
+            kind: ClusterPolicy
+            metadata:
+              name: add-label-to-namespace
+            spec:
+              rules:
+                - name: add-owner-label
+                  match:
+                    resources:
+                      kinds:
+                        - Namespace
+                  mutate:
+                    patchStrategicMerge:
+                      metadata:
+                        labels:
+                          app.kubernetes.io/owner: 'girus-lab'
+            EOF
+            ```
+          - "Aplique a policy: "
+          - "`kubectl apply -f mutate-policy-add-label-namespace.yaml`"
+          - "Crie um novo namespace."
+          - "`kubectl create ns test-namespace`"
+          - "Verifique se o label foi adicionado automaticamente."
+          - "`kubectl get ns test-namespace --show-labels`"
+          - "O label app.kubernetes.io/owner deve estar presente com o valor 'girus-lab'."
+          - "`kubectl get ns test-namespace -o json | grep 'app.kubernetes.io/owner'`"
+        tips:
+          - type: "info"
+            title: "Mutação de recursos"
+            content: "A funcionalidade `mutate` do Kyverno permite modificar recursos automaticamente durante a criação ou atualização, facilitando a aplicação de padrões e configurações consistentes no cluster."
+          - type: "warning"
+            title: "Impacto da mutação"
+            content: "Tenha cuidado ao criar policies de mutação, pois elas podem alterar recursos de maneiras inesperadas. Sempre teste suas policies em um ambiente de desenvolvimento antes de aplicá-las em produção."
+          - type: "info"
+            title: "PatchStrategicMerge"
+            content: "O tipo de mutação `patchStrategicMerge` é uma forma poderosa de modificar recursos, permitindo adicionar ou alterar campos específicos sem precisar redefinir o recurso inteiro."
+        validation:
+          - command: "kubectl get ns test-namespace -o json | grep 'kubernetes.io/metadata.name' >/dev/null 2>&1 && echo 'ok'"
+            expectedOutput: "ok"
+            errorMessage: "Label não foi adicionado ao namespace."
+
+      - name: "Enforce: Garanta uso de imagens confiáveis"
+        description: "Nova reunião com a equipe de segurança. No cluster foram detectados usos de imagens de registries não confiáveis que comprometeram a segurança. Decidiu-se criar uma policy que só permita imagens de um registry confiável (ex: cgr.dev/chainguard)."
+        steps:
+          - "Crie o arquivo **trusted-registry.yaml** conforme exemplo."
+          - | 
+            ```
+            cat <<EOF > trusted-registry.yaml
+            apiVersion: kyverno.io/v1
+            kind: ClusterPolicy
+            metadata:
+              name: images-from-trusted-registry
+            spec:
+              validationFailureAction: Enforce
+              rules:
+              - name: validate-image-registry
+                match:
+                  resources:
+                    kinds:
+                      - Pod
+                validate:
+                  message: 'Only images from cgr.dev/chainguard are allowed.'
+                  pattern:
+                    spec:
+                      containers:
+                      - name: '*'
+                        image: 'cgr.dev/chainguard/*'
+            EOF
+            ```
+          - "Aplique a policy: "
+          - "`kubectl apply -f trusted-registry.yaml`"
+          - "Tente criar um Pod com imagem de outro registry e observe o bloqueio."
+          - "`kubectl run test-untrusted-image --image=nginx --restart=Never`"
+          - "Tente criar um Pod com imagem do registry confiável e observe que é permitido."
+          - "`kubectl run test-trusted-image --image=cgr.dev/chainguard/nginx --restart=Never`"
+        tips:
+          - type: "info"
+            title: "Validação de imagens"
+            content: "Garantir que apenas imagens de registries confiáveis sejam usadas é uma prática importante para a segurança do cluster, ajudando a prevenir o uso de imagens maliciosas ou vulneráveis."
+          - type: "warning"
+            title: "Teste de validação de imagens"
+            content: "Certifique-se de testar com imagens que claramente não atendem à política para confirmar que a validação está funcionando corretamente."
+          - type: "info"
+            title: "Personalização da política de imagens"
+            content: "Você pode personalizar a política para permitir múltiplos registries confiáveis ou para aplicar regras diferentes a namespaces específicos usando o campo 'match' com seletores de namespace."
+        validation:
+          - command: "kubectl get clusterpolicies.kyverno.io -A | grep images-from-trusted-registry >/dev/null 2>&1 && echo 'ok'"
+            expectedOutput: "ok"
+            errorMessage: "Policy de imagens confiáveis não criada."
+      
+      - name: "Enforce: Quando um registry não é suficiente, use anyPattern para múltiplos registries"
+        description: "A policy criada anteriormente só permitiu imagens da cgr.dev/chainguard e isso criou um grande problema. Muitas imagens necessárias para o funcionamento do cluster não estavam disponíveis nesse registry e sim num registry privado da empresa. Para resolver o problema, crie uma policy que permita imagens de múltiplos registries confiáveis (ex: cgr.dev/chainguard, docker.io/pauloneves/*)."
+        steps:
+          - "Crie o arquivo **trusted-multiple-registries.yaml** conforme exemplo."
+          - | 
+            ```
+            cat <<EOF > trusted-multiple-registries.yaml
+            apiVersion: kyverno.io/v1
+            kind: ClusterPolicy
+            metadata:
+              name: images-from-trusted-registries
+            spec:
+              validationFailureAction: Enforce
+              rules:
+              - name: validate-image-registries
+                match:
+                  resources:
+                    kinds:
+                      - Pod
+                validate:
+                  message: 'Only images from cgr.dev/chainguard or docker.io/pauloneves are allowed.'
+                  anyPattern:
+                    - spec:
+                        containers:
+                        - name: '*'
+                          image: 'cgr.dev/chainguard/*'
+                    - spec:
+                        containers:
+                        - name: '*'
+                          image: 'pauloneves/*'
+            EOF
+            ```
+          - "Aplique a policy: "
+          - "`kubectl apply -f trusted-multiple-registries.yaml`"
+          - "Tente criar um Pod com imagem de um registry não permitido e observe o bloqueio."
+          - "`kubectl run test-untrusted-image --image=nginx --restart=Never`"
+          - "Tente criar um Pod com imagem do primeiro registry confiável e observe que é permitido."
+          - "`kubectl run test-trusted-image1 --image=cgr.dev/chainguard/nginx --restart=Never`"
+          - "Tente criar um Pod com imagem do segundo registry confiável e observe que é permitido."
+          - "`kubectl run test-trusted-image2 --image=pauloneves/nginx --restart=Never`"
+        tips:
+          - type: "info"
+            title: "Uso do anyPattern"
+            content: "O campo `anyPattern` permite definir múltiplos padrões de validação, onde o recurso é considerado válido se corresponder a pelo menos um dos padrões definidos, oferecendo flexibilidade para cenários onde existem várias condições aceitáveis."
+          - type: "warning"
+            title: "Teste de múltiplos padrões"
+            content: "Certifique-se de testar com imagens que correspondam a cada um dos padrões definidos para confirmar que a validação está funcionando corretamente para todos os casos."
+          - type: "info"
+            title: "Combinação de padrões"
+            content: "Você pode combinar `anyPattern` com outros campos de validação para criar políticas complexas que atendam a requisitos específicos do seu ambiente, como permitir diferentes registries para diferentes namespaces ou tipos de recursos."
+        validation:
+          - command: "kubectl get clusterpolicies.kyverno.io -A | grep images-from-trusted-registries >/dev/null 2>&1 && echo 'ok'"
+            expectedOutput: "ok"
+            errorMessage: "Policy de múltiplos registries não criada."  
+
+      - name: "Exclude: Quando as políticas não se aplicam, adicione exclude"
+        description: "O seu cluster muito mais seguro. E a equipe de segurança feliz com o seu trabalho. Porém, algumas políticas não se aplicam a determinados namespaces (e temos o OK da segurança). Adapte uma policy existente para não se aplicar a determinados namespaces usando exclude."
+        steps:
+          - "Edite a policy **require-resources-limits.yaml** e adicione o bloco exclude para o namespace giropops."
+          - "Bloco a ser adicionado:"
+          - | 
+            ```
+            exclude:
+              resources:
+                namespaces:
+                - giropops
+            EOF
+            ```
+          - "O arquivo completo deve ficar assim:"
+          - | 
+            ```
+            cat <<EOF > require-resources-limits.yaml
+            apiVersion: kyverno.io/v1
+            kind: ClusterPolicy
+            metadata:
+              name: require-resources-limits
+            spec:
+              validationFailureAction: Enforce
+              rules:
+              - name: check-resources-limits
+                match:
+                  resources:
+                    kinds:
+                    - Pod
+                exclude:
+                  resources:
+                    namespaces:
+                    - giropops
+                validate:
+                  message: "CPU and memory limits are required."
+                  pattern:
+                    spec:
+                        containers:
+                        - name: "*"
+                          resources:
+                            limits:
+                              cpu: "?*"
+                              memory: "?*"
+            EOF
+            ```
+          - "Crie o namespace giropops."
+          - "`kubectl create namespace giropops`"
+          - "Aplique novamente a policy: "
+          - "`kubectl apply -f require-resources-limits.yaml`"
+          - "Tente criar um Pod sem resources no namespace giropops e observe que não será bloqueado."
+          - "`kubectl run nginx-giropops --image nginx --namespace giropops --restart=Always`"
+        tips:
+          - type: "info"
+            title: "Uso do exclude"
+            content: "O campo `exclude` permite especificar recursos ou namespaces onde a policy não deve ser aplicada, oferecendo flexibilidade para cenários onde certas regras não são desejadas."
+          - type: "warning"
+            title: "Teste de exclusão"
+            content: "Certifique-se de testar a exclusão criando recursos que violariam a política no namespace excluído para confirmar que a política não está sendo aplicada lá."
+        validation:
+          - command: "kubectl apply -f pod.yaml -n giropops >/dev/null 2>&1 && echo 'ok'"
+            expectedOutput: "ok"
+            errorMessage: "Exclude não funcionou corretamente."

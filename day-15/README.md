@@ -584,9 +584,7 @@ require-cpu-memory-limits:
     failed at path /spec/containers/0/resources/limits/'
 ```
 
-
 ### Policy para limitar pull de registry confiável
-
 
 Vamos criar uma policy no namespace giropops que limite o uso de imagens apenas da chainguard
 
@@ -611,8 +609,9 @@ spec:
           containers:
           - name: "*"
             image: "cgr.dev/chainguard/*"
-```            
+```
 
+            
 
 **Validando**
 
@@ -658,8 +657,6 @@ require-cpu-memory-limits:
     failed at path /spec/containers/0/resources/limits/'
 ```
 
-
-
 Esta Kyverno Policy chamada images-from-trusted-registry, aplicada no namespace giropops, tem como objetivo garantir que todos os Pods criados utilizem apenas imagens provenientes do repositório Chainguard (cgr.dev/chainguard).
 
 Análise dos principais pontos:
@@ -672,7 +669,6 @@ Análise dos principais pontos:
 - Mensagem customizada — Caso a regra seja violada, retorna: "Images must come from Chainguard registry (cgr.dev)".
 
 **Resumo**: Esta policy impede a criação de Pods no namespace giropops que utilizem imagens de outros registries que não sejam o Chainguard, reforçando a segurança e o controle de origem das imagens.
-
 
 Os valores possíveis para o campo validationFailureAction em uma policy do Kyverno são:
 
@@ -701,7 +697,6 @@ validate:
 
 Assim, a policy aceitará imagens de ambos os registries especificados.
 
-
 **Exemplo Completo:**
 
 ```bash
@@ -729,7 +724,9 @@ spec:
             containers:
             - name: "*"
               image: "docker.io/pauloneves/*"
-```              
+```
+
+              
 
 ### Adicionar excludes nas nossas Policies
 
@@ -741,7 +738,6 @@ Para adicionar exclusões na nossa regra, deve adicionar o exclude resources.
         namespaces:
         - giropops
 ```
-
 
 ```yaml
 apiVersion: kyverno.io/v1
@@ -770,6 +766,52 @@ spec:
           containers:
           - securityContext:
               runAsNonRoot: true
-```              
+```
+
+## Kyverno - Girus Lab
+
+### Criar
+
+`girus create lab -f labs/kyverno-lab.yaml`
 
 
+```bash
+$ girus create lab -f labs/kyverno-lab.yaml                                     
+🔍 Verificando ambiente Girus...
+📦 Processando laboratório: labs/kyverno-lab.yaml
+   Aplicando laboratório 100% |██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████|  
+🔄 Reiniciando backend para carregar o template...
+   ✅ Backend reiniciado com sucesso!            ███████████████                                                                                                                                                                                                                                                 |  
+   Reiniciando backend 100% |████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████|     Aguardando inicialização completa...
+
+🔌 Reconfigurando port-forwards após reinício do backend...
+   Limpando port-forwards existentes...
+   Configurando port-forward para o backend (8080)...
+   Verificando conectividade do backend...
+   Tentativa 1 falhou, aguardando...
+   SUCESSO: Backend conectado com sucesso!
+   Configurando port-forward para o frontend (8000)...
+   Verificando conectividade do frontend...
+   Tentativa 1 falhou, aguardando...
+   SUCESSO: Frontend conectado com sucesso!
+✅ Port-forwards configurados com sucesso!
+   🔹 Backend: http://localhost:8080
+   🔹 Frontend: http://localhost:8000
+
+────────────────────────────────────────────────────────────
+✅ LABORATÓRIO ADICIONADO COM SUCESSO!
+
+📚 Título: Kyverno: Políticas e Automação no Kubernetes
+🏷  ID: kyverno-lab
+
+📋 PRÓXIMOS PASSOS:
+  • Acesse o Girus no navegador para usar o novo laboratório:
+    http://localhost:8000
+
+  • Para ver todos os laboratórios disponíveis via CLI:
+    girus list labs
+
+  • Para verificar detalhes do template adicionado:
+    kubectl describe configmap -n girus | grep -A20 kyverno-lab
+────────────────────────────────────────────────────────────
+```

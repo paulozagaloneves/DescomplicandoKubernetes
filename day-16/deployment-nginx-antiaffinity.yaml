@@ -1,0 +1,26 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-region
+spec:
+  replicas: 4
+  selector:
+    matchLabels:
+      app: nginx-region
+  template:
+    metadata:
+      labels:
+        app: nginx-region
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:latest
+        ports:
+        - containerPort: 80
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchLabels:
+                app: nginx-region
+            topologyKey: "region"

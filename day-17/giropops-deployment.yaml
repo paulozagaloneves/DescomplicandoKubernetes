@@ -1,0 +1,49 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: giropops
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: giropops-deployment
+  namespace: giropops
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: giropops
+  template:
+    metadata:
+      labels:
+        app: giropops
+    spec:
+      containers:
+        - name: giropops-container
+          image: linuxtips/giropops-senhas:1.0
+          env:
+          - name: REDIS_HOST
+            value: "redis-service"
+          ports:
+            - containerPort: 5000
+          resources:
+            limits:
+              memory: "128Mi"
+              cpu: "500m"
+            requests:
+              memory: "64Mi"
+              cpu: "250m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: giropops-service
+  namespace: giropops
+spec:
+  selector:
+    app: giropops
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 5000
+  type: LoadBalancer

@@ -16,13 +16,9 @@ Um Taint é composto por três elementos:
 Os Taints são utilizados para diversos cenários, incluindo:
 
 1. **Dedicação de Nodes**: Reservar nodes específicos para cargas de trabalho especiais (ex: nodes com GPU para workloads de machine learning)
-
 2. **Isolamento de Workloads**: Separar ambientes diferentes ou equipes, garantindo que determinados Pods só executem em nodes específicos
-
 3. **Manutenção de Nodes**: Marcar nodes que estão em manutenção ou com problemas para evitar que novos Pods sejam agendados
-
 4. **Nodes com Hardware Especial**: Garantir que apenas Pods que necessitam de hardware específico sejam agendados em nodes com esse hardware
-
 5. **Proteção de Control Plane**: Por padrão, os nodes master possuem Taints para evitar que Pods de aplicação sejam executados neles
 
 ### Efeitos dos Taints
@@ -30,9 +26,7 @@ Os Taints são utilizados para diversos cenários, incluindo:
 Existem três tipos de efeitos que um Taint pode ter:
 
 - **NoSchedule**: Novos Pods que não toleram o Taint não serão agendados no node. Pods já em execução não são afetados.
-
 - **PreferNoSchedule**: O Kubernetes tentará evitar agendar Pods que não toleram o Taint, mas não é uma regra rígida. Se não houver outra opção, o Pod pode ser agendado mesmo assim.
-
 - **NoExecute**: Pods que não toleram o Taint não serão agendados no node, e Pods já em execução que não toleram o Taint serão removidos (evicted) do node.
 
 ### Sintaxe de um Taint
@@ -78,7 +72,6 @@ Para que um Pod possa ser agendado em um node com Taint, ele precisa ter uma **T
 
 ### Exemplo da aula
 
-
 **Antes de aplicar o Taint**
 
 ```bash
@@ -104,14 +97,12 @@ ops-deck-api-84ddd69678-4tmks                 0/1     CrashLoopBackOff   11287 (
 redis-deployment-d74599fc4-bt7vf              1/1     Running            9 (27d ago)       61d   10.0.2.60    dk8s-worker-3   <none>           <none>
 ```
 
-
 Aplicar o taint "desativando" o node **dk8s-worker-2**
 
 ```bash
 $ kubectl taint node dk8s-worker-2 manutencao=true:NoExecute
 node/dk8s-worker-2 tainted
 ```
-
 
 **Obter taints de um Node**
 
@@ -216,7 +207,6 @@ nginx-statefulset-2                           1/1     Running             0     
 redis-deployment-d74599fc4-bt7vf              1/1     Running             9 (27d ago)   61d   10.0.2.60    dk8s-worker-3   <none>           <none>
 ```
 
-
 **Remover Taint**
 
 ```bash
@@ -254,13 +244,9 @@ As Tolerations trabalham em conjunto com os Taints para criar um sistema de cont
 As Tolerations são utilizadas para:
 
 1. **Permitir Acesso a Nodes Específicos**: Garantir que determinados Pods possam ser executados em nodes com Taints, como nodes com hardware especial (GPUs, SSDs de alta performance, etc.)
-
 2. **Executar Pods Privilegiados**: Permitir que componentes do sistema ou ferramentas de monitoramento executem em todos os nodes, incluindo o control plane
-
 3. **Manter Alta Disponibilidade**: Permitir que Pods críticos continuem executando mesmo quando um node está marcado para manutenção ou drenagem
-
 4. **Gerenciar Problemas de Nodes**: Controlar quanto tempo um Pod deve permanecer em um node que apresentou problemas antes de ser removido
-
 5. **Implementar Isolamento de Workloads**: Garantir que apenas workloads específicos tenham acesso a nodes dedicados
 
 ### Quando usar Tolerations?
@@ -268,15 +254,10 @@ As Tolerations são utilizadas para:
 Use Tolerations quando:
 
 - **Necessidade de Hardware Específico**: Seus Pods precisam executar em nodes com recursos especiais (GPUs, FPGAs, memória específica)
-
 - **Componentes de Sistema**: Você está executando DaemonSets, agentes de monitoramento ou logging que precisam rodar em todos os nodes
-
 - **Ambientes Multi-tenant**: Você precisa garantir isolamento entre diferentes equipes ou aplicações
-
 - **Controle de Manutenção**: Você quer controlar o comportamento de Pods durante operações de manutenção
-
 - **Execução no Control Plane**: Você precisa executar Pods específicos nos nodes master (não recomendado para aplicações regulares)
-
 - **Tratamento de Falhas**: Você quer controlar quanto tempo um Pod permanece em um node com problemas antes de ser movido
 
 ### Sintaxe de Tolerations
@@ -304,6 +285,7 @@ spec:
 Existem dois operadores disponíveis:
 
 - **Equal**: A toleration corresponde ao Taint se a chave, valor e efeito forem iguais
+
   ```yaml
   tolerations:
   - key: "ambiente"
@@ -311,8 +293,8 @@ Existem dois operadores disponíveis:
     value: "producao"
     effect: "NoSchedule"
   ```
-
 - **Exists**: A toleration corresponde ao Taint se a chave existir (valor não é necessário)
+
   ```yaml
   tolerations:
   - key: "ambiente"
@@ -451,12 +433,12 @@ Essas tolerations automáticas podem ser sobrescritas conforme necessário.
 
 ### Diferença entre Taints e Tolerations
 
-| Aspecto | Taints | Tolerations |
-|---------|--------|-------------|
-| **Aplicado em** | Nodes | Pods |
-| **Função** | Repele Pods | Permite que Pods sejam agendados |
-| **Quem define** | Administrador do cluster | Desenvolvedor da aplicação |
-| **Ação** | Rejeita Pods sem toleration | Aceita Taints do node |
+| Aspecto         | Taints                      | Tolerations                      |
+| --------------- | --------------------------- | -------------------------------- |
+| **Aplicado em** | Nodes                       | Pods                             |
+| **Função**      | Repele Pods                 | Permite que Pods sejam agendados |
+| **Quem define** | Administrador do cluster    | Desenvolvedor da aplicação       |
+| **Ação**        | Rejeita Pods sem toleration | Aceita Taints do node            |
 
 ### Importante
 
@@ -464,8 +446,6 @@ Essas tolerations automáticas podem ser sobrescritas conforme necessário.
 - Para garantir que um Pod seja agendado em um node específico, combine Taints/Tolerations com **Node Affinity** ou **Node Selector**
 - Uma Toleration sem `tolerationSeconds` significa que o Pod tolerará o Taint indefinidamente (para efeito NoExecute)
 - Tolerations não funcionam como uma "lista de permissões" - um Pod pode ser agendado em nodes sem Taints mesmo que tenha Tolerations definidas
-
-
 
 ### Aula
 
@@ -511,7 +491,6 @@ spec:
         effect: "NoSchedule"
 ```
 
-
 ```bash
 $ kubectl get pods -o wide
 NAME                                          READY   STATUS    RESTARTS      AGE   IP           NODE            NOMINATED NODE   READINESS GATES
@@ -535,7 +514,6 @@ nginx-statefulset-1                           1/1     Running   0             24
 nginx-statefulset-2                           1/1     Running   0             24m   10.0.2.179   dk8s-worker-3   <none>           <none>
 redis-deployment-d74599fc4-bt7vf              1/1     Running   9 (27d ago)   61d   10.0.2.60    dk8s-worker-3   <none>           <none>
 ```
-
 
 ## Labels nos Nodes
 
@@ -568,7 +546,6 @@ dk8s-worker-2   Ready    <none>   61d   v1.35.0   beta.kubernetes.io/arch=amd64,
 ╭─paulo@discovery ~/workspace/linuxtips/DescomplicandoKubernetes ‹main●› (⎈|k8s_40:N/A)
 ╰─$
 ```
-
 
 ```bash
 $ kubectl label nodes dk8s-worker-2 gpu=true
@@ -609,15 +586,10 @@ Existem dois tipos principais de Affinity:
 O Affinity é utilizado para:
 
 1. **Otimização de Performance**: Colocar Pods próximos a recursos específicos (armazenamento local, cache, etc.)
-
 2. **Alta Disponibilidade**: Distribuir réplicas de uma aplicação em diferentes zonas de disponibilidade ou racks
-
 3. **Redução de Latência**: Co-localizar Pods que se comunicam frequentemente para reduzir latência de rede
-
 4. **Considerações de Hardware**: Agendar Pods em nodes com características específicas (SSD, CPU específica, memória)
-
 5. **Conformidade e Licenciamento**: Garantir que aplicações executem apenas em nodes específicos por questões regulatórias ou de licença
-
 6. **Otimização de Custos**: Agendar workloads não-críticas em nodes de menor custo
 
 ### Node Affinity
@@ -815,13 +787,13 @@ spec:
 
 ### Comparação: Node Selector vs Node Affinity vs Taints/Tolerations
 
-| Característica | Node Selector | Node Affinity | Taints/Tolerations |
-|----------------|---------------|---------------|-------------------|
-| **Flexibilidade** | Baixa | Alta | Média |
-| **Operadores** | Apenas igualdade | In, NotIn, Exists, etc. | Equal, Exists |
-| **Soft Rules** | Não | Sim (preferred) | Não |
-| **Perspectiva** | Pod escolhe node | Pod escolhe node | Node rejeita pod |
-| **Uso combinado** | Sim | Sim | Sim |
+| Característica    | Node Selector    | Node Affinity           | Taints/Tolerations |
+| ----------------- | ---------------- | ----------------------- | ------------------ |
+| **Flexibilidade** | Baixa            | Alta                    | Média              |
+| **Operadores**    | Apenas igualdade | In, NotIn, Exists, etc. | Equal, Exists      |
+| **Soft Rules**    | Não              | Sim (preferred)         | Não                |
+| **Perspectiva**   | Pod escolhe node | Pod escolhe node        | Node rejeita pod   |
+| **Uso combinado** | Sim              | Sim                     | Sim                |
 
 ### TopologyKey
 
@@ -922,9 +894,6 @@ spec:
             cpu: "1000m"
 ```
 
-
-
-
 ### Aula
 
 ```yaml
@@ -958,7 +927,6 @@ spec:
                 - "true"
 ```
 
-
 ## AntiAffinity
 
 ```yaml
@@ -990,6 +958,4 @@ spec:
             topologyKey: "region"
 ```
 
-
 ## preferredScheduling e requiredScheduling
-

@@ -42,8 +42,28 @@ metadata:
 spec:
   selector:
     app: giropops
+  type: ClusterIP
   ports:
     - protocol: TCP
-      port: 80
+      port: 5000
       targetPort: 5000
-  type: LoadBalancer
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: giropops-ingress
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: giropops.cloud.local
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: giropops-service
+            port:
+              number: 5000

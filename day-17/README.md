@@ -37,13 +37,13 @@ Uma **Network Policy** muda isso, permitindo criar **regras de tráfego explíci
 
 ### Principais características
 
-| Aspecto | Descrição |
-|---------|-----------|
-| **Ingress** | Controla tráfego **de entrada** para os pods |
-| **Egress** | Controla tráfego **de saída** dos pods |
-| **podSelector** | Seleciona quais pods a policy aplica |
-| **namespaceSelector** | Seleciona pods de outros namespaces |
-| **Whitelist** | Network Policy funciona por "liberação" (padrão negar) |
+| Aspecto               | Descrição                                              |
+| --------------------- | ------------------------------------------------------ |
+| **Ingress**           | Controla tráfego **de entrada** para os pods           |
+| **Egress**            | Controla tráfego **de saída** dos pods                 |
+| **podSelector**       | Seleciona quais pods a policy aplica                   |
+| **namespaceSelector** | Seleciona pods de outros namespaces                    |
+| **Whitelist**         | Network Policy funciona por "liberação" (padrão negar) |
 
 ### Casos de uso comuns
 
@@ -57,7 +57,6 @@ Uma **Network Policy** muda isso, permitindo criar **regras de tráfego explíci
 - Requer CNI plugin que suporte Network Policy (Calico, Flannel, etc.)
 - Não funciona sem um plugin apropriado instalado
 - Padrão é **deny-all** quando a policy é criada (nega o que não foi explicitamente permitido)
-
 
 ## Meu primeiro Network Policy
 
@@ -154,7 +153,6 @@ monitoring          Active   49d   kubernetes.io/metadata.name=monitoring,pod-se
 traefik             Active   73d   kubernetes.io/metadata.name=traefik
 ```
 
-
 ### Apagar NetworkPolicy
 
 Apagar regras criadas anteriormente para evitar conflitos.
@@ -189,7 +187,6 @@ spec:
                 values:
                   - giropops
 ```
-
 
 ```bash
 $ kubectl apply -f netpol-block-ingress.yaml 
@@ -263,7 +260,6 @@ spec:
 
 Apagar **todos** Network Policy
 
-
 ```bash
 $ kubectl get netpol -n giropops               
 NAME                           POD-SELECTOR   AGE
@@ -319,7 +315,3 @@ Could not connect to Redis at redis-service.giropops.svc:6379: Try again
 curl: (6) Could not resolve host: giropops-service.giropops.svc (Timeout while contacting DNS servers)
 / # 
 ```
-
-
-
-

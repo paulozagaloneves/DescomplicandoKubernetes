@@ -101,13 +101,12 @@ Um ClusterRoleBinding conecta uma ClusterRole a usuários, grupos ou service acc
 
 ## Resumo visual
 
-| Componente | Escopo | Uso |
-|-----------|--------|-----|
-| **Role** | Namespace | Permissões limitadas a um namespace |
-| **RoleBinding** | Namespace | Concede Role a sujeitos em um namespace |
-| **ClusterRole** | Cluster | Permissões em todo o cluster |
-| **ClusterRoleBinding** | Cluster | Concede ClusterRole globalmente |
-
+| Componente             | Escopo    | Uso                                     |
+| ---------------------- | --------- | --------------------------------------- |
+| **Role**               | Namespace | Permissões limitadas a um namespace     |
+| **RoleBinding**        | Namespace | Concede Role a sujeitos em um namespace |
+| **ClusterRole**        | Cluster   | Permissões em todo o cluster            |
+| **ClusterRoleBinding** | Cluster   | Concede ClusterRole globalmente         |
 
 ## Criando e assinando um certificado no kubernetes
 
@@ -147,7 +146,6 @@ NCAkTgH7UVnL9jCAbFFJliCUjd9q3o/+AP+o4gQ=
 -----END CERTIFICATE REQUEST-----
 ```
 
-
 ```bash
 ╭─paulo@discovery ~/workspace/linuxtips/DescomplicandoKubernetes/day-18 ‹main●› (⎈|k8s_40:giropops)
 ╰─$ cat developer.csr | base64 | tr -d '\n'
@@ -170,8 +168,6 @@ spec:
   usages:
     - client auth
 ```
-
-
 
 ```bash
 $ kubectl apply -f developer.yaml                   
@@ -203,7 +199,6 @@ Events:  <none>
 ```
 
 ### Approve Certificate
-
 
 ```bash
 ─paulo@discovery ~/workspace/linuxtips/DescomplicandoKubernetes/day-18 ‹main●› (⎈|k8s_40:giropops)
@@ -464,9 +459,7 @@ volumeattributesclasses             vac                                 storage.
 clusterpolicyreports                cpolr                               wgpolicyk8s.io/v1alpha2           false        ClusterPolicyReport
 ```
 
-
 #### Namespaced
-
 
 ```bash
 $ kubectl api-resources --namespaced=false | grep role
@@ -491,7 +484,6 @@ pods                                                                    metrics.
 ```
 
 ### Role Binding
-
 
 #### Role
 
@@ -523,7 +515,6 @@ NAME        CREATED AT
 developer   2026-03-28T08:25:51Z
 ```
 
-
 ```bash
 ─paulo@discovery ~/workspace/linuxtips/DescomplicandoKubernetes/day-18 ‹main●› (⎈|k8s_40:giropops)
 ╰─$ kubectl get role -n dev -o yaml
@@ -554,7 +545,6 @@ metadata:
   resourceVersion: ""
 ```
 
-
 ```bash
 ╭─paulo@discovery ~/workspace/linuxtips/DescomplicandoKubernetes/day-18 ‹main●› (⎈|k8s_40:giropops)
 ╰─$ kubectl describe role developer -n dev                                                                                                                                  1 ↵
@@ -569,13 +559,11 @@ PolicyRule:
 ╰─$ 
 ```
 
-
 #### Criando Role com kubectl
 
 ```bash
 $ kubectl create role pod-reader --verb=get,list --resource=pods -n dev
 ```
-
 
 #### Role Biding
 
@@ -597,7 +585,6 @@ roleRef:
   apiGroup: rbac.authorization.k8s.io
 ```
 
-
 ```bash
 ─paulo@discovery ~/workspace/linuxtips/DescomplicandoKubernetes/day-18 ‹main●› (⎈|k8s_40:giropops)
 ╰─$ kubectl apply -f rolebinding-developer.yaml 
@@ -607,7 +594,6 @@ rolebinding.rbac.authorization.k8s.io/developer created
 NAME        ROLE             AGE
 developer   Role/developer   22s
 ```
-
 
 ```bash
 ╭─paulo@discovery ~/workspace/linuxtips/DescomplicandoKubernetes/day-18 ‹main●› (⎈|k8s_40:giropops)
@@ -638,13 +624,11 @@ metadata:
   resourceVersion: ""
 ```
 
-
 #### Criando RoleBinding com kubectl
 
 ```bash
 $ kubectl create rolebinding rb-pod-reader --role=pod-reader --user=joao -n dev
 ```
-
 
 ## Configurando User e contexto kubectl config
 
@@ -724,7 +708,6 @@ warning: couldn't attach to pod/alpine, falling back to streaming logs: pods "al
 Error from server (Forbidden): pods "alpine" is forbidden: User "developer" cannot get resource "pods/log" in API group "" in the namespace "dev"
 ```
 
-
 **Criando pod**
 
 ```bash
@@ -736,7 +719,6 @@ pod/nginx-dev created
 ```
 
 ### Listando permissões
-
 
 ```bash
 ─paulo@discovery ~/workspace/linuxtips/DescomplicandoKubernetes/day-18 ‹main●› (⎈|developer-aula:dev)
@@ -848,7 +830,6 @@ LS0tLS1CRUdJTiBDRVJUSUZJQ0FURSBSRVFVRVNULS0tLS0KTUlJQ1dEQ0NBVUFDQVFBd0V6RVJNQThH
 ```
 
 ### Certificate Signing Request
-
 
 **File:** platform.yaml
 
@@ -967,7 +948,6 @@ view                                                                   2026-01-0
 
 ```
 
-
 ### ClusterRole Binding
 
 **File:** clusterolebinding-platform.yaml
@@ -993,7 +973,6 @@ roleRef:
 clusterrolebinding.rbac.authorization.k8s.io/platform created
 ```
 
-
 **Listando**
 
 ```bash
@@ -1017,6 +996,7 @@ traefik-traefik                                                 ClusterRole/trae
 ╰─$ kubectl config set-credentials platform --client-certificate platform.crt --client-key platform.key --embed-certs
 User "platform" set.
 ```
+
 #### 2. Context
 
 ```bash
@@ -1103,7 +1083,6 @@ metrics-server-6cb56849d5-kn6c5                1/1     Running   0              
 
 ## ServiceAccount com Token
 
-
 Um **ServiceAccount** é uma identidade usada por aplicações, Pods e controladores para autenticar no Kubernetes API Server.
 
 Diferente de um usuário humano (ex.: certificado CN=developer), o ServiceAccount representa um processo rodando dentro do cluster.
@@ -1119,7 +1098,6 @@ Diferente de um usuário humano (ex.: certificado CN=developer), o ServiceAccoun
 
 O token é uma credencial associada ao ServiceAccount e pode ser usada para chamadas autenticadas na API.  
 Em versões atuais do Kubernetes, o uso recomendado é com **tokens temporários/projetados** (TokenRequest), evitando tokens estáticos de longa duração.
-
 
 ### Meu ServiceAccount
 
@@ -1164,7 +1142,6 @@ Events:              <none>
 ```bash
 $ kubectl create serviceaccount deploy-bot -n dev
 ```
-
 
 ### ServiceAccount Secret
 
@@ -1387,7 +1364,6 @@ nginx-statefulset-2                           1/1     Running   0             21
 redis-deployment-d74599fc4-bt7vf              1/1     Running   9 (48d ago)   82d
 ```
 
-
 ```bash
 ╭─paulo@discovery ~/workspace/linuxtips/DescomplicandoKubernetes/day-18 ‹main●› (⎈|k8s_40:default)
 ╰─$ kubectl exec -ti meu-pod-reader -- sh    
@@ -1504,14 +1480,11 @@ eyJhbGciOi...qDTy8rCT7KoT-l1VRvz3pEQBSi_usvO7wvsBcemAzQOrGpY7kim9smOTL-20hR3-s_h
 }
 ```
 
-
 ## Validando permissoes
-
 
 ```bash
 $ kubectl auth can-i list pods --as=joao -n dev
 ```
-
 
 **Verificar se o joao pode apagar pods no namespace dev**
 

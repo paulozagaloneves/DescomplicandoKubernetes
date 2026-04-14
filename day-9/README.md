@@ -36,10 +36,10 @@ helm install ingress-nginx ingress-nginx/ingress-nginx \
 ```
 
 ### Notas para Bare Metal:
+
 * **NodePort:** Por padrão, o Kubernetes alocará portas no intervalo 30000-32767.
 * **HostNetwork:** Se precisar que o Ingress escute diretamente nas portas 80/443 dos nós, adicione `--set controller.hostNetwork=true` ao comando Helm.
 * **MetalLB:** Se o seu cluster possui MetalLB configurado, você pode alterar o `service.type` para `LoadBalancer`.
-
 
 ## 3. Verificar a Instalação
 
@@ -55,13 +55,8 @@ Verifique as portas mapeadas (especialmente se estiver usando NodePort):
 kubectl get svc -n ingress-nginx
 ```
 
-
-
 ## 4. Remover o NGINX Ingress Controller
 
 ```bash
 kubectl delete all  --all -n ingress-nginx
 ```
-
-
-

@@ -23,6 +23,7 @@
     - [values.yaml](#valuesyaml)
     - [Templates](#templates-1)
     - [Install](#install)
+  - [Funções IF e RANGE](#funções-if-e-range)
 
 ## O que é o Helm e HelmChart
 
@@ -170,7 +171,6 @@ Use "helm [command] --help" for more information about a command.
 
 ```
 
-
 ### Completion
 
 ```bash
@@ -304,10 +304,7 @@ redis-dev               ClusterIP      None             <none>         6379/TCP 
 redis-service           ClusterIP      10.111.45.153    <none>         6379/TCP                     55s
 ```
 
-
-
 ## Criando primeiro Chart
-
 
 ### Estrutura do Chart
 
@@ -326,7 +323,6 @@ redis-service           ClusterIP      10.111.45.153    <none>         6379/TCP 
 
 3 directories, 6 files
 ```
-
 
 #### Chart.yaml
 
@@ -389,7 +385,6 @@ spec:
         imagePullPolicy: Always
 ```
 
-
 **File:** redis-deployment.yaml
 
 ```yaml
@@ -425,7 +420,6 @@ spec:
 
 ### Deploy
 
-
 ```bash
 ╭─paulo@discovery ~/workspace/linuxtips/DescomplicandoKubernetes/day-19/giropops-chart ‹main●› (⎈|k8s_40:default)
 ╰─$ helm install giropops-senhas ./   
@@ -437,7 +431,6 @@ REVISION: 1
 DESCRIPTION: Install complete
 TEST SUITE: None
 ```
-
 
 ```bash
 ╭─paulo@discovery ~/workspace/linuxtips/DescomplicandoKubernetes/day-19/giropops-chart ‹main●› (⎈|k8s_40:default)
@@ -550,6 +543,7 @@ redis:
     targetPort: 6379
 
 ```
+
 ### Templates
 
 **File:** app-deployment.yaml
@@ -608,7 +602,6 @@ spec:
 
 ```
 
-
 **File:** redis-deployment.yaml
 
 ```yaml
@@ -643,7 +636,6 @@ spec:
 
 ```
 
-
 **File:** redis-service.yaml
 
 ```yaml
@@ -662,7 +654,6 @@ spec:
 ```
 
 ### Install
-
 
 ```bash
 ╭─paulo@discovery ~/workspace/linuxtips/DescomplicandoKubernetes/day-19/giropops-chart ‹main●› (⎈|k8s_40:default)
@@ -699,3 +690,5 @@ redis-helm-54d4ccfd49-sht4h            1/1     Running   0             10s
 NAME            NAMESPACE       REVISION        UPDATED                                         STATUS          CHART                           APP VERSION
 giropops-senhas default         1               2026-03-29 09:20:38.061285363 +0100 WEST        deployed        giropops-senhas-chart-0.1.0     1.0        
 ```
+
+## Funções IF e RANGE

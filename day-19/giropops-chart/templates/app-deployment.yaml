@@ -18,7 +18,7 @@ spec:
       - image: {{ .Values.giropopsSenhas.image }}
         name: giropops-senhas
         ports:
-        - containerPort: {{ .Values.giropopsSenhas.port }}
+        - containerPort: {{ .Values.giropopsSenhas.service.targetPort }}
         resources:
           limits:
             memory: {{ .Values.giropopsSenhas.resources.limits.memory }}

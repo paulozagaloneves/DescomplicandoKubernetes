@@ -575,7 +575,7 @@ dk8s-worker-3          Ready    <none>          61d   v1.35.0   sa-east-1
 
 Affinity (afinidade) é um conjunto de regras que permite controlar de forma mais expressiva e flexível em quais nodes os Pods serão agendados. Diferente dos Taints/Tolerations que funcionam como uma "rejeição/permissão", o Affinity trabalha como uma "atração", permitindo que você especifique preferências ou requisitos para o agendamento de Pods.
 
-Existem dois tipos principais de Affinity:
+Existem três tipos principais de Affinity:
 
 1. **Node Affinity**: Define regras de afinidade entre Pods e Nodes baseadas em labels
 2. **Pod Affinity**: Define regras de afinidade entre Pods, permitindo co-localização

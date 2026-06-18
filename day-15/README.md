@@ -774,7 +774,6 @@ spec:
 
 `girus create lab -f labs/kyverno-lab.yaml`
 
-
 ```bash
 $ girus create lab -f labs/kyverno-lab.yaml                                     
 🔍 Verificando ambiente Girus...

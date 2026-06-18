@@ -325,7 +325,9 @@ spec:
       target:
         type: Utilization
         averageUtilization: 50
-```        
+```
+
+        
 
 **Criar serviço**
 
@@ -334,7 +336,6 @@ $ kubectl expose deployment --type=LoadBalancer nginx-hpa
 ```
 
 ## Instalar locust
-
 
 ## Executar locust
 

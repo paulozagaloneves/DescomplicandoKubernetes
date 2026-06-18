@@ -78,6 +78,24 @@ sudo apt-mark hold kubelet kubeadm kubectl
 ## 7. Instale e configure o containerd
 
 ```bash
+sudo install -m 0755 -d /etc/apt/keyrings
+sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
+sudo chmod a+r /etc/apt/keyrings/docker.asc
+
+# Add the repository to Apt sources:
+sudo tee /etc/apt/sources.list.d/docker.sources <<EOF
+Types: deb
+URIs: https://download.docker.com/linux/ubuntu
+Suites: $(. /etc/os-release && echo "${UBUNTU_CODENAME:-$VERSION_CODENAME}")
+Components: stable
+Architectures: $(dpkg --print-architecture)
+Signed-By: /etc/apt/keyrings/docker.asc
+EOF
+
+sudo apt update
+```
+
+```bash
 sudo apt install -y containerd.io
 sudo containerd config default | sudo tee /etc/containerd/config.toml
 sudo sed -i 's/SystemdCgroup = false/SystemdCgroup = true/g' /etc/containerd/config.toml
@@ -87,10 +105,17 @@ sudo systemctl enable --now kubelet
 
 ## 8. Inicialize o cluster Kubernetes
 
+**control-plane**
+
 > Altere o endereço IP conforme o IP da sua VM.
 
 ```bash
-sudo kubeadm init --pod-network-cidr=10.10.0.0/16 --apiserver-advertise-address=192.168.1.40
+sudo kubeadm init --pod-network-cidr=10.10.0.0/16 --apiserver-advertise-address=192.168.1.60
+```
+
+**workers**
+```bash
+sudo kubeadm join 192.168.1.60:6443 --token f95556.a534uxzas51vqf7n        --discovery-token-ca-cert-hash sha256:e03be7c916b0b0f229dcf827e5df63040eebc603f7caaea43e67bfaba7c2c026
 ```
 
 ## 9. Configure o acesso kubectl para o usuário

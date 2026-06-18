@@ -1,6 +1,5 @@
 # Aula ao Vivo
 
-
 ## Criando imagem standard
 
 ### Criando imagem
@@ -46,7 +45,6 @@ linuxtips/cash-flow:1.0                     280fa7eb9ed8        937MB           
 - Ajuda a manter imagens mais seguras e eficientes.
 - Você pode usar o Docker Scout via CLI ou integrado ao Docker Hub, facilitando a análise contínua das imagens durante o desenvolvimento e o deploy.
 
-
 **Instalar**
 
 **Referência:** https://docs.docker.com/scout/install/
@@ -55,7 +53,6 @@ linuxtips/cash-flow:1.0                     280fa7eb9ed8        937MB           
 $ curl -fsSL https://raw.githubusercontent.com/docker/scout-cli/main/install.sh -o install-scout.sh
 $ sh install-scout.sh
 ```
-
 
 **Verificar vulnerabilidades**
 
@@ -76,9 +73,6 @@ What's next:
 
 ```
 
-
-
-
 ## Criando imagens Multistage
 
 **O que é Multistage**
@@ -90,7 +84,6 @@ Como funciona:
 - Você define várias etapas usando a instrução FROM várias vezes.
 - Cada etapa pode usar uma imagem base diferente.
 - Você copia apenas os artefatos necessários da etapa de build para a etapa final, descartando arquivos e dependências desnecessárias.
-
 
 ### Criando imagem
 
@@ -178,7 +171,6 @@ What's next:
 
 ```
 
-
 ## Criando imagens seguras Multistage com Wolfi
 
 **O que é a Chainguard e suas imagens Wolfi**
@@ -199,8 +191,6 @@ What's next:
 - [https://images.chainguard.dev/](https://images.chainguard.dev/)
 - [Documentation](https://edu.chainguard.dev/)
 
-
-
 ```dockerfile
 # Build Stage
 FROM golang:1.25 AS builder
@@ -220,7 +210,6 @@ COPY --from=builder /app/main /
 
 CMD ["/main"]
 ```
-
 
 ```bash
 $ docker image build -t cash-flow:2.0 -f dockerfiles/Dockerfile.wolfi .
@@ -274,7 +263,6 @@ No lugar de usar FROM debian ou FROM alpine, você pode usar FROM gcr.io/distrol
 
 Essas imagens são recomendadas quando você quer máxima segurança e simplicidade no ambiente de execução do seu container.
 
-
 ```dockerfile
 # Build Stage
 FROM golang:1.25 AS builder
@@ -295,7 +283,6 @@ COPY --from=builder /app/main /
 CMD ["/main"]
 ```
 
-
 ```bash
 $ docker image build -t cash-flow:3.0 -f dockerfiles/Dockerfile.distroless .
 $                                                                      
@@ -310,7 +297,6 @@ $
 ```
 
 **Nota:** Como é possível verificar a imagem (3.0) continuou a reduzir o tamanho.
-
 
 ### Validando vulnerabilidades
 
@@ -333,8 +319,6 @@ What's next:
 
 **Nota:** Como se pode verificar, mesmo com uma imagem distroless (bem reduzida) ainda conseguimos zerar as vulnerabilidades da imagem.
 
-
-
 ## Docker history
 
 O comando **docker history** exibe o histórico de camadas (layers) de uma imagem Docker. Ele mostra, em ordem, como a imagem foi construída, listando cada instrução do Dockerfile (como RUN, COPY, ADD) que gerou uma nova camada, junto com informações como tamanho, autor, data e comando usado.
@@ -346,7 +330,6 @@ docker history nome-da-imagem
 ```
 
 Isso ajuda a entender como a imagem foi criada, identificar camadas grandes e otimizar o Dockerfile.
-
 
 ### Docker history das imagens criadas anteriormente
 
@@ -414,5 +397,3 @@ IMAGE          CREATED        CREATED BY                    SIZE      COMMENT
 <missing>      N/A                                          22.9kB    
 <missing>      N/A                                          271kB   
 ```
-
-

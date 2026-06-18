@@ -1,2 +1,1 @@
 # Day 13 - Criando imagens de Containers e Reduzindo Vulnerabilidades com Wolfi
-

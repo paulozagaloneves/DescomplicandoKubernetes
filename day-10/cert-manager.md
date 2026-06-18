@@ -2,9 +2,7 @@
 
 ## O que é cert-manager
 
-
 ## Instalando cert-manager
-
 
 **Referência:** https://cert-manager.io/
 
@@ -16,13 +14,12 @@ $ helm install cert-manager oci://quay.io/jetstack/charts/cert-manager \
   --set crds.enabled=true
 ```
 
-
-
 ## trust-manager
 
 **Referência:** https://cert-manager.io/docs/trust/trust-manager/#quick-start-example
 
 ### O que é trust-manager
+
 trust-manager is the easiest way to manage trust bundles in Kubernetes and OpenShift clusters.
 
 It orchestrates bundles of trusted X.509 certificates which are primarily used for validating certificates during a TLS handshake but can be used in other situations, too.
@@ -38,7 +35,6 @@ trust-manager ensures that it's both quick and easy to keep your trusted certifi
 It's designed to complement cert-manager and works well when consuming CA certificates used by a cert-manager Issuer or ClusterIssuer - but trust-manager can be used entirely independently of cert-manager, too.
 
 ### Instalando trust-manager
-
 
 #### Instalando cert-manager
 
@@ -113,7 +109,6 @@ stringData:
 ```bash
 $ kubectl apply -f cert_internal_secrets.yaml
 ```
-
 
 **Filename:** cert_internal_ca_bundle.yaml
 
@@ -212,7 +207,6 @@ $ openssl crl2pkcs7 -nocrl \
   | grep -i "<nome-da-tua-org>"
 ```
 
-
 Testar o handshake TLS directamente contra a API
 
 ```bash
@@ -225,7 +219,6 @@ openssl s_client \
 
 # Resultado esperado: "Verification: OK"
 ```
-
 
 Testar com curl
 

@@ -29,15 +29,18 @@ data:
 ```
 
 ### Como aplicar:
+
 ```bash
 kubectl apply -f primeiro-secret.yaml
 ```
 
 ### Como verificar:
+
 ```bash
 kubectl get secret my-secret
 kubectl get secret my-secret -o yaml
 ```
+
 O Kubernetes decodifica os valores automaticamente quando montados como variáveis de ambiente ou volumes num Pod.
 
 ---
@@ -81,6 +84,7 @@ spec:
 ```
 
 ### Como aplicar (apenas exemplo, requer credenciais reais):
+
 ```bash
 kubectl apply -f dockerhub-secrets.yaml
 kubectl apply -f minion-deployment.yaml
@@ -151,6 +155,7 @@ spec:
 ```
 
 ### Como aplicar:
+
 ```bash
 # 1. Criar o Secret TLS e o ConfigMap
 kubectl apply -f tls-secret.yaml
